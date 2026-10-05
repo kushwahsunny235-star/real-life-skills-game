@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Real Life Decision Game</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: white;
+    }
+
+    .game {
+        max-width: 750px;
+        margin: auto;
+        min-height: 100vh;
+        padding: 25px 18px;
+    }
+
+    .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .logo {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .money {
+        background: #1e293b;
+        padding: 10px 15px;
+        border-radius: 12px;
+    }
+
+    .card {
+        background: #1e293b;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .tag {
+        display: inline-block;
+        background: #334155;
+        padding: 7px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+
+    h1 {
+        font-size: 28px;
+        margin-top: 5px;
+    }
+
+    .story {
+        font-size: 17px;
+        line-height: 1.7;
+        color: #e2e8f0;
+    }
+
+    .choices {
+        margin-top: 25px;
+    }
+
+    button {
+        width: 100%;
+        padding: 15px;
+        margin: 9px 0;
+        border: none;
+        border-radius: 12px;
+        background: #334155;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        text-align: left;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #475569;
+        transform: translateY(-2px);
+    }
+
+    .choice-number {
+        font-weight: bold;
+        margin-right: 8px;
+    }
+
+    .result {
+        margin-top: 22px;
+        padding: 18px;
+        background: #0f172a;
+        border-radius: 15px;
+        line-height: 1.7;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .ending {
+        text-align: center;
+    }
+
+    .ending h1 {
+        font-size: 34px;
+    }
+
+    .stat {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px;
+        background: #334155;
+        border-radius: 10px;
+        margin: 8px 0;
+    }
+
+    .small {
+        color: #94a3b8;
+        font-size: 14px;
+    }
+
+    .danger {
+        color: #fca5a5;
+    }
+
+    .good {
+        color: #86efac;
+    }
+
+    .warning {
+        color: #fde68a;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <div class="top">
+        <div class="logo">🎮 Real Life</div>
+        <div class="money">💰 ₹1,700</div>
+    </div>
+
+    <!-- GAME SCREEN -->
+
+    <div id="gameScreen" class="card">
+
+        <div class="tag">👟 MONEY + NEGOTIATION</div>
+
+        <h1 id="title">₹2,000 Ka Decision</h1>
+
+        <div id="story" class="story"></div>
+
+        <div id="choices" class="choices"></div>
+
+    </div>
+
+
+    <!-- END SCREEN -->
+
+    <div id="endScreen" class="card ending hidden">
+
+        <h1 id="endingTitle"></h1>
+
+        <p id="endingText" class="story"></p>
+
+        <div id="stats"></div>
+
+        <div class="result">
+            <b>🔍 Tumhari journey:</b>
+            <p id="journey"></p>
+        </div>
+
+        <p class="small">
+            Har decision ka result alag ho sakta hai.
+            Dobara khelkar different path try karo.
+        </p>
+
+        <button onclick="location.reload()">
+            🔄 Try Again
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let money = 1700;
+
+let stress = 0;
+let trust = 50;
+let reputation = 50;
+
+let journey = [];
+
+let state = "start";
+
+
+function showSituation(title, text, choices) {
+
+    document.getElementById("title").innerText = title;
+
+    document.getElementById("story").innerHTML = text;
+
+    const choicesDiv = document.getElementById("choices");
+
+    choicesDiv.innerHTML = "";
+
+    choices.forEach((choice, index) => {
+
+        const button = document.createElement("button");
+
+        button.innerHTML =
+            `<span class="choice-number">${String.fromCharCode(65 + index)}.</span>
+             ${choice.text}`;
+
+        button.onclick = choice.action;
+
+        choicesDiv.appendChild(button);
+
+    });
+}
+
+
+function updateMoney() {
+
+    document.querySelector(".money").innerText =
+        "💰 ₹" + money;
+
+}
+
+
+function chooseStart(option) {
+
+    journey.push(option);
+
+    if (option === 1) {
+
+        state = "negotiate";
+
+        showSituation(
+            "Shopkeeper ko counter-offer do",
+            `
+            <p>
+            Tumne shoes dekhe. Price <b>₹2,000</b> hai.
+            </p>
+
+            <p>
+            Shopkeeper: <b>"₹1,800 final. Isse neeche nahi jaunga."</b>
+            </p>
+
+            <p>
+            Tumhare paas ₹1,700 hain.
+            </p>
+            `,
+            [
+                {
+                    text: "₹1,700 final bolkar deal ke liye pressure banana",
+                    action: () => counterOffer()
+                },
+                {
+                    text: "Pehle pucho ki ₹1,800 mein kuch extra mil sakta hai",
+                    action: () => askExtra()
+                },
+                {
+                    text: "Bolo ₹1,800 mere budget se bahar hai aur nikal jao",
+                    action: () => walkAway()
+                },
+                {
+                    text: "Dusri shop check karne ki baat karo",
+                    action: () => secondShop()
+                }
+            ]
+        );
+
+    } else if (option === 2) {
+
+        journey.push("asked for information");
+
+        showSituation(
+            "Ek aur information mili...",
+            `
+            <p>
+            Tum shoes ko dhyan se dekhte ho.
+            </p>
+
+            <p>
+            Shopkeeper bolta hai:
+            <b>"Ye last pair hai. Size tumhara hai."</b>
+            </p>
+
+            <p>
+            Lekin box thoda damaged hai.
+            </p>
+            `,
+            [
+                {
+                    text: "Box damaged hai, isliye price kam karo",
+                    action: () => damagedBox()
+                },
+                {
+                    text: "Shoes properly check karo",
+                    action: () => checkShoes()
+                },
+                {
+                    text: "Deal chhod do",
+                    action: () => walkAway()
+                },
+                {
+                    text: "Shopkeeper se pucho return/exchange possible hai?",
+                    action: () => askReturn()
+                }
+            ]
+        );
+
+    } else if (option === 3) {
+
+        journey.push("walked away");
+
+        walkAway();
+
+    } else {
+
+        journey.push("looked for another shop");
+
+        secondShop();
+
+    }
+
+}
+
+
+function counterOffer() {
+
+    journey.push("aggressive negotiation");
+
+    showSituation(
+        "Shopkeeper ka reaction",
+        `
+        <p>
+        Tum bolte ho:
+        <b>"₹1,700 hai mere paas. Lena hai to lo."</b>
+        </p>
+
+        <p>
+        Shopkeeper thoda rukta hai.
+        </p>
+
+        <p>
+        <b>"₹1,750 kar sakta hoon. Last."</b>
+        </p>
+
+        <p>
+        Tumhare paas ₹1,700 hain.
+        </p>
+        `,
+        [
+            {
+                text: "₹50 kisi friend se mangwa lo",
+                action: () => borrowMoney()
+            },
+            {
+                text: "₹1,700 par hi insist karo",
+                action: () => insist()
+            },
+            {
+                text: "₹1,750 dekar deal close karo",
+                action: () => impossibleDeal()
+            },
+            {
+                text: "Shopkeeper se koi alternative maango",
+                action: () => alternative()
+            }
+        ]
+    );
+}
+
+
+function askExtra() {
+
+    journey.push("asked for extra value");
+
+    showSituation(
+        "Unexpected offer",
+        `
+        <p>
+        Shopkeeper bolta hai:
+        </p>
+
+        <p>
+        <b>"Price ₹1,800 hi rahega, lekin shoe cleaner free de dunga."</b>
+        </p>
+
+        <p>
+        Tumhara budget ₹1,700 hai.
+        </p>
+        `,
+        [
+            {
+                text: "₹1,700 final offer karo",
+                action: () => finalOffer()
+            },
+            {
+                text: "₹1,800 arrange karne ki koshish karo",
+                action: () => arrangeMoney()
+            },
+            {
+                text: "Cleaner nahi chahiye, price kam karo",
+                action: () => pushAgain()
+            },
+            {
+                text: "Deal chhod do",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function walkAway() {
+
+    stress += 5;
+
+    endGame(
+        "🚶 Deal Chhod Di",
+        `
+        Tumne shoes nahi kharide.
+
+        Lekin tumhare ₹1,700 safe hain.
+
+        Ho sakta hai ye smart decision ho...
+        ya ho sakta hai tumne ek achhi opportunity miss kar di.
+        `
+    );
+}
+
+
+function secondShop() {
+
+    journey.push("searched for another option");
+
+    showSituation(
+        "Dusri shop...",
+        `
+        <p>
+        Tum dusri shop par jaate ho.
+        </p>
+
+        <p>
+        Same type ke shoes ₹1,650 ke mil rahe hain.
+        </p>
+
+        <p>
+        Lekin shopkeeper kehta hai:
+        <b>"No return. No exchange."</b>
+        </p>
+        `,
+        [
+            {
+                text: "Shoes check karke kharid lo",
+                action: () => buySecondShop()
+            },
+            {
+                text: "Return/exchange ke baare mein aur pucho",
+                action: () => askReturn2()
+            },
+            {
+                text: "Risk nahi lena, pehli shop par wapas jao",
+                action: () => goBack()
+            },
+            {
+                text: "Deal chhod do",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function buySecondShop() {
+
+    money -= 1650;
+    stress += 5;
+
+    updateMoney();
+
+    endGame(
+        "👟 Deal Complete",
+        `
+        Tumne ₹1,650 mein shoes kharid liye.
+
+        Tumhare paas ₹50 bach gaye.
+
+        Lekin no-return policy ki wajah se
+        tumne risk liya.
+        `
+    );
+}
+
+
+function askReturn2() {
+
+    trust += 5;
+
+    showSituation(
+        "New information",
+        `
+        <p>
+        Shopkeeper bolta hai:
+        </p>
+
+        <p>
+        <b>"Agar size issue hua to 24 hours mein exchange kar dunga."</b>
+        </p>
+
+        <p>
+        Ab decision tumhara hai.
+        `,
+        [
+            {
+                text: "Shoes properly check karke buy karo",
+                action: () => buySecondShop()
+            },
+            {
+                text: "Proof/message ke bina buy nahi karunga",
+                action: () => askProof()
+            },
+            {
+                text: "Risk nahi lena",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function askProof() {
+
+    reputation += 5;
+
+    endGame(
+        "🧠 Careful Decision",
+        `
+        Tumne written confirmation maanga.
+
+        Shopkeeper agree nahi karta,
+        isliye tumne deal chhod di.
+
+        Tumne paise bachaye aur unnecessary risk avoid kiya.
+        `
+    );
+}
+
+
+function goBack() {
+
+    showSituation(
+        "Pehli shop par wapas",
+        `
+        <p>
+        Tum pehli shop par wapas aa gaye.
+        </p>
+
+        <p>
+        Shopkeeper bolta hai:
+        <b>"Ab ₹1,800 se neeche nahi."</b>
+        </p>
+        `,
+        [
+            {
+                text: "₹1,700 final offer",
+                action: () => finalOffer()
+            },
+            {
+                text: "Deal chhod do",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function damagedBox() {
+
+    showSituation(
+        "Shopkeeper ka jawab",
+        `
+        <p>
+        Shopkeeper bolta hai:
+        </p>
+
+        <p>
+        <b>"Box damaged hai, shoes nahi."</b>
+        </p>
+
+        <p>
+        Wo ₹100 kam karne ko ready hai.
+        </p>
+
+        <p>
+        New price: <b>₹1,900</b>
+        </p>
+        `,
+        [
+            {
+                text: "₹1,700 final offer",
+                action: () => finalOffer()
+            },
+            {
+                text: "₹1,900 mein le lo",
+                action: () => buy1900()
+            },
+            {
+                text: "Shoes properly inspect karo",
+                action: () => inspect()
+            },
+            {
+                text: "Deal chhod do",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function inspect() {
+
+    showSituation(
+        "Inspection...",
+        `
+        <p>
+        Tum shoes ko properly inspect karte ho.
+        </p>
+
+        <p>
+        Sole ke paas halka sa wear hai.
+        </p>
+
+        <p>
+        Ab tumhare paas negotiation ka genuine reason hai.
+        `,
+        [
+            {
+                text: "₹1,650 offer karo",
+                action: () => strongOffer()
+            },
+            {
+                text: "₹1,750 offer karo",
+                action: () => reasonableOffer()
+            },
+            {
+                text: "Deal chhod do",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function strongOffer() {
+
+    showSituation(
+        "Final negotiation",
+        `
+        <p>
+        Shopkeeper shoes dekhta hai.
+        </p>
+
+        <p>
+        <b>"₹1,700 final. Isse kam nahi."</b>
+        </p>
+        `,
+        [
+            {
+                text: "Deal accept",
+                action: () => buy1700()
+            },
+            {
+                text: "Aur negotiate karo",
+                action: () => pushAgain()
+            },
+            {
+                text: "Leave",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function reasonableOffer() {
+
+    showSituation(
+        "Shopkeeper thinks...",
+        `
+        <p>
+        Shopkeeper:
+        <b>"₹1,750 mein le jao."</b>
+        </p>
+        `,
+        [
+            {
+                text: "Accept",
+                action: () => buy1750()
+            },
+            {
+                text: "₹1,700 final bolo",
+                action: () => buy1700()
+            },
+            {
+                text: "Leave",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function buy1700() {
+
+    money = 0;
+    updateMoney();
+
+    endGame(
+        "🔥 Perfect Budget Finish",
+        `
+        Tumne exactly ₹1,700 mein deal close kar di.
+
+        Tumhare paas extra cash nahi bacha,
+        lekin tumne apne budget ke andar goal achieve kiya.
+        `
+    );
+}
+
+
+function buy1750() {
+
+    money = -50;
+
+    endGame(
+        "⚠️ Budget Crossed",
+        `
+        Tumne deal close kar di,
+        lekin tumhare original budget se ₹50 zyada kharch ho gaye.
+
+        Deal achhi thi, lekin budget discipline weak raha.
+        `
+    );
+}
+
+
+function buy1900() {
+
+    money = -200;
+
+    endGame(
+        "💸 Expensive Decision",
+        `
+        Tumne shoes le liye,
+        lekin tumhare budget se ₹200 zyada kharch hue.
+
+        Kya shoes worth the extra ₹200 the?
+        `
+    );
+}
+
+
+function finalOffer() {
+
+    showSituation(
+        "Final Chance",
+        `
+        <p>
+        Tum shopkeeper ko bolte ho:
+        </p>
+
+        <p>
+        <b>"₹1,700 hai. Agar kar sakte ho to abhi deal karte hain."</b>
+        </p>
+
+        <p>
+        Shopkeeper kuch seconds sochta hai...
+        </p>
+        `,
+        [
+            {
+                text: "Wait karo",
+                action: () => waitDeal()
+            },
+            {
+                text: "₹1,700 + future customer banne ka promise",
+                action: () => promise()
+            },
+            {
+                text: "Leave karne lago",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function waitDeal() {
+
+    money = 0;
+
+    endGame(
+        "🤝 Deal Closed",
+        `
+        Shopkeeper finally agree kar gaya.
+
+        ₹1,700 mein shoes mil gaye.
+
+        Tumne pressure create kiya,
+        lekin unnecessary aggression nahi dikhayi.
+        `
+    );
+}
+
+
+function promise() {
+
+    endGame(
+        "🤝 Different Kind of Deal",
+        `
+        Shopkeeper agree nahi hua.
+
+        Usne bola:
+        "₹1,750 final."
+
+        Tumhare paas ab decision hai,
+        lekin tumne budget ke bahar jaane ka risk avoid kiya.
+        `
+    );
+}
+
+
+function borrowMoney() {
+
+    stress += 20;
+
+    showSituation(
+        "Friend ka message...",
+        `
+        <p>
+        Friend: <b>"₹50 bhej deta hoon."</b>
+        </p>
+
+        <p>
+        Phir message aata hai:
+        </p>
+
+        <p>
+        <b>"Kal ₹100 wapas karna padega 😅"</b>
+        </p>
+        `,
+        [
+            {
+                text: "₹50 le lo",
+                action: () => borrowAccept()
+            },
+            {
+                text: "Nahi, itne chhote purchase ke liye nahi",
+                action: () => borrowReject()
+            }
+        ]
+    );
+}
+
+
+function borrowAccept() {
+
+    money = -50;
+
+    endGame(
+        "😬 Deal Hui, Lekin Cost Badh Gayi",
+        `
+        Shoes mil gaye.
+
+        Lekin ₹50 ke liye tumhe ₹100 return karne padenge.
+
+        Tumne immediate problem solve kar li,
+        lekin long-term cost badh gayi.
+        `
+    );
+}
+
+
+function borrowReject() {
+
+    endGame(
+        "🧠 Pressure Handle Kiya",
+        `
+        Tumne sirf deal close karne ke liye
+        unnecessary borrowing nahi ki.
+
+        Shoes nahi mile,
+        lekin tumne apna financial limit maintain kiya.
+        `
+    );
+}
+
+
+function insist() {
+
+    showSituation(
+        "Shopkeeper gets annoyed",
+        `
+        <p>
+        Tum baar-baar ₹1,700 par insist karte ho.
+        </p>
+
+        <p>
+        Shopkeeper:
+        <b>"Bhai, ₹1,750 se neeche possible nahi."</b>
+        </p>
+        `,
+        [
+            {
+                text: "₹50 arrange karo",
+                action: () => borrowMoney()
+            },
+            {
+                text: "Leave",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function impossibleDeal() {
+
+    endGame(
+        "❌ Budget Problem",
+        `
+        Tumhare paas ₹1,700 the,
+        lekin tumne ₹1,750 ki deal accept kar li.
+
+        Decision practically possible nahi tha.
+        `
+    );
+}
+
+
+function alternative() {
+
+    showSituation(
+        "Alternative mil gaya",
+        `
+        <p>
+        Shopkeeper bolta hai:
+        </p>
+
+        <p>
+        <b>"₹1,700 mein shoes le jao, lekin cleaner nahi milega."</b>
+        </p>
+        `,
+        [
+            {
+                text: "Deal accept",
+                action: () => buy1700()
+            },
+            {
+                text: "Aur ₹50 discount try karo",
+                action: () => insist()
+            },
+            {
+                text: "Leave",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function checkShoes() {
+
+    inspect();
+}
+
+
+function askReturn() {
+
+    showSituation(
+        "Return policy",
+        `
+        <p>
+        Shopkeeper:
+        <b>"Size issue hua to exchange kar dunga."</b>
+        </p>
+
+        <p>
+        Lekin refund nahi milega.
+        `,
+        [
+            {
+                text: "Shoes check karke negotiate karo",
+                action: () => inspect()
+            },
+            {
+                text: "Refund nahi hai, deal chhod do",
+                action: () => walkAway()
+            },
+            {
+                text: "Exchange terms clear karo",
+                action: () => askReturn2()
+            }
+        ]
+    );
+}
+
+
+function arrangeMoney() {
+
+    stress += 10;
+
+    endGame(
+        "💸 Budget Stretch",
+        `
+        Tumne ₹100 extra arrange karne ki koshish ki.
+
+        Lekin deal close hone se pehle tumhe realise hua
+        ki tum apne original budget se bahar ja rahe ho.
+
+        Kabhi-kabhi opportunity ke chakkar mein
+        budget todna expensive ho sakta hai.
+        `
+    );
+}
+
+
+function pushAgain() {
+
+    showSituation(
+        "Shopkeeper ka patience khatam...",
+        `
+        <p>
+        Shopkeeper:
+        <b>"₹1,700 final. Nahi to koi aur customer dekh raha hoon."</b>
+        </p>
+        `,
+        [
+            {
+                text: "₹1,700 mein buy",
+                action: () => buy1700()
+            },
+            {
+                text: "Leave",
+                action: () => walkAway()
+            }
+        ]
+    );
+}
+
+
+function endGame(title, text) {
+
+    document.getElementById("gameScreen").classList.add("hidden");
+
+    document.getElementById("endScreen").classList.remove("hidden");
+
+    document.getElementById("endingTitle").innerText = title;
+
+    document.getElementById("endingText").innerHTML = text;
+
+    document.getElementById("stats").innerHTML = `
+        <div class="stat">
+            <span>💰 Money</span>
+            <b>₹${money}</b>
+        </div>
+
+        <div class="stat">
+            <span>🤝 Trust</span>
+            <b>${trust}</b>
+        </div>
+
+        <div class="stat">
+            <span>😰 Pressure</span>
+            <b>${stress}</b>
+        </div>
+
+        <div class="stat">
+            <span>🎯 Decision Score</span>
+            <b>${calculateScore()}</b>
+        </div>
+    `;
+
+    document.getElementById("journey").innerText =
+        journey.join(" → ");
+}
+
+
+function calculateScore() {
+
+    let score = 50;
+
+    if (money >= 0) score += 15;
+    if (stress < 20) score += 10;
+    if (trust >= 50) score += 10;
+
+    if (score > 100) score = 100;
+
+    return score + "/100";
+}
+
+
+/* FIRST SCREEN */
+
+showSituation(
+    "₹2,000 Ka Decision",
+    `
+    <p>
+    Kal tumhare school ka important event hai.
+    </p>
+
+    <p>
+    Tumhe shoes chahiye.
+    Tumhare paas total <b>₹1,700</b> hain.
+    </p>
+
+    <p>
+    Ek shop mein shoes pasand aa gaye.
+    Price hai <b>₹2,000</b>.
+    </p>
+
+    <p>
+    Shopkeeper bolta hai:
+    </p>
+
+    <p>
+    <b>"₹1,800 final. Isse neeche nahi jaunga."</b>
+    </p>
+
+    <p>
+    Tumhare paas limited money hai.
+    Ab tum kya karoge?
+    </p>
+    `,
+    [
+        {
+            text: "Seedha negotiation start karunga",
+            action: () => chooseStart(1)
+        },
+        {
+            text: "Pehle shoes aur deal ke baare mein information lunga",
+            action: () => chooseStart(2)
+        },
+        {
+            text: "Deal chhod dunga",
+            action: () => chooseStart(3)
+        },
+        {
+            text: "Dusri shop check karunga",
+            action: () => chooseStart(4)
+        }
+    ]
+);
+
+</script>
+
+</body>
+</html>
